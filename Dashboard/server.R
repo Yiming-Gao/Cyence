@@ -13,15 +13,14 @@ shinyServer(function(input, output) {
   output$plot <- renderPlot({
 
     # Render plots based on input$variable from ui.R
-    if (input$var == "cy") {
+    if (input$var == "cy")
       ggplot(scores, aes(x = cy)) + geom_histogram(bins = 50, fill = I("blue"), col = I("red"), alpha = I(.2)) + scale_x_log10() + theme_minimal()
-    }
-    if (input$var == "sus") {
+  
+    else if (input$var == "sus") 
       ggplot(scores, aes(x = sus)) + geom_histogram(bins = 50, fill = I("blue"), col = I("red"), alpha = I(.2)) + scale_x_log10() + theme_minimal()
-    }
-    if (input$var == "mo") {
+
+    else if (input$var == "mo")
       ggplot(scores, aes(x = mo)) + geom_histogram(bins = 50, fill = I("blue"), col = I("red"), alpha = I(.2)) + scale_x_log10() + theme_minimal()
-    }
   })
   
 })
