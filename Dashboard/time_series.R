@@ -33,7 +33,26 @@ ex_scores <- ex_scores[order(run_date)]
 dbDisconnect(con_postgresql)
 
 # Left join scores& Company Info by cyence_id
-companies_scores <- inner_join(scores, companies, by = c("cyence_id" = "cyence_id", "run_date" = "run_date")) %>% 
-  filter(!is.na(company_name)) %>% # filter NAs in company_name column
-  # filter(.$country == "United States") %>%
-  arrange(desc(cyence_id)) 
+ex_company_scores <- inner_join(ex_company, ex_scores, by = c("run_date" = "run_date"))
+
+# basic time series
+library(reshape2)
+library(scales)
+
+ex_company_scores_plot <- melt(ex_company_scores[, c("run_date", "cy", "sus", "mo")], id = "run_date")
+p <- ggplot(ex_company_scores_plot, aes(x = run_date, y = value, colour = variable)) + 
+  geom_line() +
+  (scale_x_date(breaks = date_breaks("1 month"),
+                labels = date_format("%b %y"))) +
+  xlab("Run Date") + ylab("Score") + 
+  labs(title = paste0("Cyence Scores for ", names(sort(table(ex_company_scores$company_name), decreasing = TRUE)[1])),
+       color = "Type") +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title.x = element_text(size = 12, face = "bold"),
+    axis.title.y = element_text(size = 12, face = "bold"),
+    text = element_text(size = 12)
+  ) +
+  theme_minimal()
+
+ggplotly(p)
