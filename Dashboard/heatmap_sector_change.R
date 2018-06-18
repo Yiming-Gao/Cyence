@@ -34,7 +34,7 @@ scores <- scores[order(cyence_id, run_date)]
 dbDisconnect(con_postgresql)
 
 # Left join scores& Company Info by cyence_id
-companies_scores <- left_join(scores, companies, by = c("cyence_id" = "cyence_id", "run_date" = "run_date")) %>% 
+companies_scores <- inner_join(scores, companies, by = c("cyence_id" = "cyence_id", "run_date" = "run_date")) %>% 
   filter(!is.na(company_name)) %>% # filter NAs in company_name column
   # filter(.$country == "United States") %>%
   arrange(desc(cyence_id)) 
@@ -56,14 +56,10 @@ sector_scores_avg <- companies_scores %>% # order by descending cyence_id
             sector_sus_avg = mean(sus),
             sector_mo_avg = mean(mo)) %>%
   group_by(cyence_sector, revenue_bins) %>%
-  mutate(cy_pct_change = (sector_cy_avg - lag(sector_cy_avg))/ sector_cy_avg,
-         sus_pct_change = (sector_sus_avg - lag(sector_sus_avg))/ sector_sus_avg,
-         mo_pct_change = (sector_mo_avg - lag(sector_mo_avg))/ sector_mo_avg) %>%
+  mutate(cy_change = sector_cy_avg - lag(sector_cy_avg),
+         sus_change = sector_sus_avg - lag(sector_sus_avg),
+         mo_change = sector_mo_avg - lag(sector_mo_avg)) %>%
   na.omit() 
-# %>%
-#   mutate(cy_pct_change = sprintf("%.3f %%", 100 * cy_pct_change),
-#          sus_pct_change = sprintf("%.3f %%", 100 * sus_pct_change),
-#          mo_pct_change = sprintf("%.3f %%", 100 * mo_pct_change))
 
 
 # basic heatmap
@@ -71,13 +67,14 @@ p <- ggplot(sector_scores_avg, aes(revenue_bins, cyence_sector,
                                    # customize the tooltip
                                    text = paste("Sector: ", cyence_sector, "\n",
                                                 "Number of Companies: ", n_companies, "\n",
-                                                "Change in score: ", sprintf("%.3f %%", 100 * cy_pct_change)))) + 
-  geom_tile(aes(fill = cy_pct_change), colour = "white") + 
-  scale_fill_gradient2(low = "steelblue", mid = "white", high = "red", midpoint = 0, limits = range(sector_scores_avg$cy_pct_change), name = "Change (%)") +
-  labs(title = paste0("Change (%) in Cyence Score from \n", month.abb[month(rundate)-1], " to ", month.abb[month(rundate)])) +
+                                                "Average score: ", round(sector_cy_avg, 2), "\n",
+                                                "Change in score: ", round(cy_change, 3)))) + 
+  geom_tile(aes(fill = cy_change), colour = "white") + 
+  scale_fill_gradient2(low = "steelblue", mid = "white", high = "red", midpoint = 0, limits = range(sector_scores_avg$cy_change), name = "Change in Score") +
+  labs(title = paste0("Change in Cyence Score from \n", month.name[month(rundate)-1], " to ", month.name[month(rundate)])) +
   xlab("Revenue Bins") + ylab("Cyence Sector") +
   theme(
-    plot.title = element_text(size = 16, face = "bold.italic"),
+    plot.title = element_text(size = 14, face = "bold"),
     axis.title.x = element_text(size = 12, face = "bold"),
     axis.title.y = element_text(size = 12, face = "bold"),
     text = element_text(size = 12)
