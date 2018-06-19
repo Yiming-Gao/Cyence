@@ -10,15 +10,27 @@ library(shiny)
 library(dplyr)
 
 shinyUI(navbarPage("Monthly Visualizations of Cyence Scores",
-                   # first tab panel
-                   tabPanel("US",
-                            sidebarLayout(
-                              sidebarPanel(
-                                "Map"
-                              ),
-                              
-                              mainPanel(
-                                leafletOutput("map"), height = 600
+                   # first tab panel (with two sub-panels)
+                   navbarMenu("US",
+                     # first sub-panel
+                     tabPanel("Map",
+                              fluidPage(
+                                title = "Map",
+                                leafletOutput("map", height = "800px")
                               )
-                            ))
+                     ),
+                     
+                     # second sub-panel
+                     tabPanel("HeatMap",
+                              fluidPage(
+                                title = "Heatmap",
+                                plotlyOutput("heatmap", height = "800px")
+                              ))
+                   ),
+                   
+                   # second tab panel
+                   tabPanel("EU"),
+                   
+                   # third tab panel
+                   tabPanel("JP")
                    ))
