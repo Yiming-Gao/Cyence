@@ -10,17 +10,37 @@
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
   
-  output$plot <- renderPlot({
-
-    # Render plots based on input$variable from ui.R
-    if (input$var == "cy")
-      ggplot(scores, aes(x = cy)) + geom_histogram(bins = 50, fill = I("blue"), col = I("red"), alpha = I(.2)) + scale_x_log10() + theme_minimal()
-  
-    else if (input$var == "sus") 
-      ggplot(scores, aes(x = sus)) + geom_histogram(bins = 50, fill = I("blue"), col = I("red"), alpha = I(.2)) + scale_x_log10() + theme_minimal()
-
-    else if (input$var == "mo")
-      ggplot(scores, aes(x = mo)) + geom_histogram(bins = 50, fill = I("blue"), col = I("red"), alpha = I(.2)) + scale_x_log10() + theme_minimal()
+  output$map <- renderLeaflet({
+    # Map by country
+    countries <- readOGR(dsn = getwd() , layer = "TM_WORLD_BORDERS_SIMPL-0.3") # https://www.r-graph-gallery.com/183-choropleth-map-with-leaflet/
+    # summary(countries$NAME)
+    
+    map <- leaflet(countries) %>% addTiles() %>% setView(lat = 40, lng = -20, zoom = 2)
+    pal <- colorNumeric(
+      palette = "YlOrBr",
+      domain = country_scores_avg$country_cy_avg
+    )
+    
+    # Prepare the text for the popup message
+    mytext <- 
+      paste("<b>Country: ", countries$NAME,"</b><br/>", 
+            "Number of Companies: ", country_scores_avg$n_companies, "<br/>",
+            "<b>Cyence Score: ", round(country_scores_avg$country_cy_avg, 2), "</b><br/>", 
+            "Susceptibility: ", round(country_scores_avg$country_sus_avg, 2), "<br/>",
+            "Motivation: ", round(country_scores_avg$country_mo_avg,2)) %>%
+      lapply(htmltools::HTML)
+    
+    # Display
+    map %>%
+      addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 0.9, color = "white", weight = 0.3,
+                  fillColor = ~pal(country_scores_avg$country_cy_avg),
+                  label = mytext,
+                  labelOptions = labelOptions( style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")
+      ) %>%
+      addLegend("bottomright", pal = pal, values = country_scores_avg$country_cy_avg,
+                title = "Average Cyence Score",
+                opacity = 1
+      )
   })
   
 })
