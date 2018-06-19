@@ -11,14 +11,17 @@ library(shiny)
 library(pool)
 library(readr)
 library(plotly)
+library(rgdal)
+library(leaflet)
 
 
 setwd("/Users/ygao/Desktop/Dashboard/Code/try")
 options(scipen = 999)
 
-#-------------------------------------------------------------------------------------------------------------------------
-### Supporting functions
-#-------------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------ Map ------------------------------------------------------#
+# Fetch the data
+rundate = as.Date('2018-06-01')
+
 # Connect to databases
 drv <- dbDriver("PostgreSQL")
 
@@ -31,29 +34,36 @@ con_postgresql <- dbConnect(drv,
                             user = aws["DB_USER"], 
                             password = aws["DB_PASS"])
 
-# Fetch the data
 # Cyence score
-query <- paste0("select distinct run_date, cyence_id, cy, mo, sus from model_monthly_v3.score where run_date >= '", rundate-months(12), "'")
+query <- paste0("select distinct run_date, cyence_id, cy, mo, sus from model_monthly_v3.score where run_date >= '", rundate-months(1), "'")
 scores <- dbGetQuery(con_postgresql, query) %>% as.data.table()
 scores$cyence_id <- as.character(scores$cyence_id)
 scores <- scores[order(cyence_id, run_date)]
 
-# US company Info
+# US Company Info
 query <- paste0("select distinct run_date, cyence_id, company_name, website, city, state, country, cyence_sector, sic4, revenue, income, employees from er.company_info_union where run_date >= '", rundate-months(1), "' 
                 and country in (select name from appcache.vw_country where included) and (gap_flag = 1 or revenue >= 20) and gov_flag = 0 and cyence_sector <> 'Public Administration'")
-companies <- dbGetQuery(con_postgresql, query) %>% as.data.table()
-companies$cyence_id <- as.character(companies$cyence_id)
-companies <- companies[order(cyence_id, run_date)]
+us_companies <- dbGetQuery(con_postgresql, query) %>% as.data.table()
+us_companies$cyence_id <- as.character(us_companies$cyence_id)
+us_companies <- us_companies[order(cyence_id, run_date)]
 
-# One example company (Apple Inc., cyence_id = 60704780) info across months
-query <- paste0("select distinct run_date, cyence_id, cy, mo, sus from model_monthly_v3.score where cyence_id = 60704780 and run_date >='", rundate-months(12), "'")
-apple_scores <- dbGetQuery(con_postgresql, query) %>% as.data.table()
-apple_scores$cyence_id <- as.character(apple_scores$cyence_id)
-apple_scores <- apple_scores[order(run_date)]
+# # EU Company Info
+# query <- paste0("select distinct run_date, cyence_id, company_name, website, city, state, country, cyence_sector, sic4, revenue, income, employees from er.company_info_eu where run_date >= '", rundate-months(1), "' 
+#                 and country in (select name from appcache.vw_country where included) and (gap_flag = 1 or revenue >= 20) and gov_flag = 0 and cyence_sector <> 'Public Administration'")
+# eu_companies <- dbGetQuery(con_postgresql, query) %>% as.data.table()
+# eu_companies$cyence_id <- as.character(eu_companies$cyence_id)
+# eu_companies <- eu_companies[order(cyence_id, run_date)]
+# 
+# # JP Company Info
+# query <- paste0("select distinct run_date, cyence_id, company_name, website, city, state, country, cyence_sector, sic4, revenue, income, employees from er.company_info_jp where run_date >= '", rundate-months(1), "' 
+#                 and country in (select name from appcache.vw_country where included) and (gap_flag = 1 or revenue >= 20) and gov_flag = 0 and cyence_sector <> 'Public Administration'")
+# jp_companies <- dbGetQuery(con_postgresql, query) %>% as.data.table()
+# jp_companies$cyence_id <- as.character(jp_companies$cyence_id)
+# jp_companies <- jp_companies[order(cyence_id, run_date)]
 dbDisconnect(con_postgresql)
 
-# Left join scores& Company Info by cyence_id
-companies_scores <- left_join(scores, companies, by = "cyence_id") %>% 
+# Data Manipulation for Maps
+companies_scores <- inner_join(us_companies, scores, by = "cyence_id") %>% 
   filter(!is.na(company_name)) %>% # filter NAs in company_name column
   # filter(.$country == "United States") %>%
   arrange(desc(cyence_id)) 
@@ -63,40 +73,16 @@ country_scores_avg <- companies_scores %>% # order by descending cyence_id
   group_by(country) %>%
   summarise(country_cy_avg = mean(cy),
             country_sus_avg = mean(sus),
-            country_mo_avg = mean(mo))
-
-# Map by country
-library(rgdal)
-countries <- readOGR(dsn= getwd() , layer = "TM_WORLD_BORDERS_SIMPL-0.3") # https://www.r-graph-gallery.com/183-choropleth-map-with-leaflet/
-# summary(countries$NAME)
-map <- leaflet(countries) %>% addTiles()
-pal <- colorNumeric(
-  palette = "YlGnBu",
-  domain = country_scores_avg$country_cy_avg
-)
-
-# Prepare the text for the popup message
-mytext <- 
-  paste("Country: ", countries$NAME,"<br/>", 
-        "Cyence Score: ", round(country_scores_avg$country_cy_avg, 2), "<br/>", 
-        "Susceptibility: ", round(country_scores_avg$country_sus_avg, 2), "<br/>",
-        "Motivation: ", round(country_scores_avg$country_mo_avg,2)) %>%
-  lapply(htmltools::HTML)
-
-# Display
-map %>%
-  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
-              color = ~pal(country_scores_avg$country_cy_avg),
-              label = mytext,
-              labelOptions = labelOptions( style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")
-  ) %>%
-  addLegend("bottomright", pal = pal, values = country_scores_avg$country_cy_avg,
-            title = "Average Cyence Score",
-            opacity = 1
-  )
+            country_mo_avg = mean(mo),
+            n_companies = n())
 
 
+# # Data Manipulation for heatmaps
+# # Group by cyence_sector (industry)
+# sector_scores_avg <- companies_scores %>% # order by descending cyence_id
+#   group_by(cyence_sector, run_date.x) %>%
+#   summarise(sector_cy_avg = mean(cy),
+#             sector_sus_avg = mean(sus),
+#             sector_mo_avg = mean(mo))
 
-# Time series plot of Apple Inc.
-plot_ly(x = apple_scores$run_date, y = apple_scores$cy, mode = "lines")
 
