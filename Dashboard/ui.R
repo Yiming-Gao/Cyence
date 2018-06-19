@@ -6,28 +6,19 @@
 # 
 #    http://shiny.rstudio.com/
 #
+library(shiny)
+library(dplyr)
 
-
-# Define UI for application that draws a histogram
-shinyUI(fluidPage(
-  
-  # Application title
-  titlePanel("Scores"),
-  
-  # Select from cyence score, susceptibility or motivation
-  sidebarLayout(
-    # Sidebar panel for inputs
-    sidebarPanel(
-      
-       selectInput(inputId = "var", 
-                   label = "Variable:",
-                   choices = c("Cyence Score" = "cy", "Susceptibility" = "sus", "Motivation" = "mo"),
-                   selected = NULL)
-    ),
-    
-    # Show a plot 
-    mainPanel(
-       plotOutput("plot")
-    )
-  )
-))
+shinyUI(navbarPage("Monthly Visualizations of Cyence Scores",
+                   # first tab panel
+                   tabPanel("US",
+                            sidebarLayout(
+                              sidebarPanel(
+                                "Map"
+                              ),
+                              
+                              mainPanel(
+                                leafletOutput("map"), height = 600
+                              )
+                            ))
+                   ))
