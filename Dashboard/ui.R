@@ -9,7 +9,7 @@
 library(shiny)
 library(dplyr)
 
-shinyUI(navbarPage("Monthly Visualizations of Cyence Scores",
+shinyUI(navbarPage(theme = shinytheme("flatly"), "Monthly Visualizations of Cyence Scores",
                    # first tab panel (with two sub-panels)
                    navbarMenu("US",
                      # first sub-panel
@@ -25,6 +25,32 @@ shinyUI(navbarPage("Monthly Visualizations of Cyence Scores",
                               fluidPage(
                                 title = "Heatmap",
                                 plotlyOutput("heatmap", height = "800px")
+                              )),
+                     
+                     # third sub-panel
+                     # generate a row with a sidebar
+                     tabPanel("Companies by Sector",
+                              fluidPage(
+                                titlePanel("Changes by Cyence Sector"),
+                                
+                                # generate a row with a sidebar
+                                sidebarLayout(
+                                  # Define the sidebar with one input
+                                  sidebarPanel(
+                                    selectInput("sector", "Sector: ",
+                                                choices = c("Education & Research", "Licensed Professional Services", "Financial Services", "Membership Organizations", "Healthcare",
+                                                            "Consumer Services", "Wholesale Trade", "Manufacturing", "Hospitality", "Software and Technology Services",
+                                                            "Non-Profit Organizations", "Business Services", "Publishing", "Retail Trade", "Utilities",
+                                                            "Transportation Services", "Agriculture & Mining")),
+                                    hr(),
+                                    helpText("Data from latest month")
+                                  ),
+                                  
+                                  # create a spot for time series plots
+                                  mainPanel(
+                                    plotlyOutput("top10", height = "1000px")
+                                  )
+                                )
                               ))
                    ),
                    
