@@ -42,12 +42,16 @@ shinyUI(navbarPage(theme = shinytheme("flatly"), "Monthly Visualizations of Cyen
                                                             "Consumer Services", "Wholesale Trade", "Manufacturing", "Hospitality", "Software and Technology Services",
                                                             "Non-Profit Organizations", "Business Services", "Publishing", "Retail Trade", "Utilities",
                                                             "Transportation Services", "Agriculture & Mining")),
+                                    selectInput("revenue_bin", "Revenue bin: ",
+                                                choices = c("0-5M", "5-10M", "10-25M", "25-50M", "50-100M",
+                                                            "100-500M", "500M-1B", "1-5B", "5-10B", "10B& up")), 
                                     hr(),
                                     helpText("Data from latest month")
                                   ),
                                   
                                   # create a spot for time series plots
                                   mainPanel(
+                                    h4(textOutput("text_revenue_bin")),
                                     plotlyOutput("top10", height = "1000px")
                                   )
                                 )
