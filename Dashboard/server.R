@@ -71,11 +71,28 @@ shinyServer(function(input, output) {
     
   })
   
+  
   # Output 3
+  output$text_revenue_bin <- renderPrint({
+    cat("Ten companies with greatest score change in ", input$sector, " with revenue ", input$revenue_bin, ".")
+  })
+  
+  
+  
+  # Output 4
   output$top10 <- renderPlotly({
     
     # Left join scores& Company Info by cyence_id
-    ex_company <- ex_company[ex_company$cyence_sector == input$sector, ]
+    ex_company$revenue_bins <- ifelse(ex_company$revenue < 5, "0-5M",
+                                      ifelse((ex_company$revenue >= 5) & (ex_company$revenue < 10), "5-10M",
+                                             ifelse((ex_company$revenue >= 10) & (ex_company$revenue < 25), "10-25M",
+                                                    ifelse((ex_company$revenue >= 25) & (ex_company$revenue < 50), "25-50M", 
+                                                           ifelse((ex_company$revenue >= 50) & (ex_company$revenue < 100), "50-100M",
+                                                                  ifelse((ex_company$revenue >= 100) & (ex_company$revenue < 500), "100-500M",
+                                                                         ifelse((ex_company$revenue >= 500) & (ex_company$revenue < 1000), "500M-1B",
+                                                                                ifelse((ex_company$revenue >= 1000) & (ex_company$revenue < 5000), "1-5B",
+                                                                                       ifelse((ex_company$revenue >= 5000) & (ex_company$revenue < 10000), "5-10B","10B& up")))))))))
+    ex_company <- ex_company[(ex_company$cyence_sector == input$sector) & (ex_company$revenue_bins == input$revenue_bin), ]
     ex_company$cyence_id <- as.character(ex_company$cyence_id)
     ex_scores <- ex_scores[ex_scores$cyence_id %in% ex_company$cyence_id, ]
     ex_company_scores <- inner_join(ex_company, ex_scores, by = c("cyence_id" = "cyence_id"))
