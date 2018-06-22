@@ -12,8 +12,11 @@ shinyServer(function(input, output) {
   
   # Output 1
   output$map <- renderLeaflet({
+    
+    # read data
+    country_scores_avg = read.csv("country_score_avg.csv")
+    
     # Map by country
-    countries <- readOGR(dsn = getwd() , layer = "TM_WORLD_BORDERS_SIMPL-0.3") # https://www.r-graph-gallery.com/183-choropleth-map-with-leaflet/
     countries@data <- right_join(country_scores_avg, countries@data, by = c("country" = "NAME"))
     # summary(countries$NAME)
     
@@ -49,6 +52,9 @@ shinyServer(function(input, output) {
   # Output 2
   output$heatmap <- renderPlotly({
     
+    # read data
+    sector_scores_avg = read.csv("sector_scores_avg.csv")
+    
     # basic heatmap
     p <- ggplot(sector_scores_avg, aes(revenue_bins, cyence_sector,
                                        # customize the tooltip
@@ -82,39 +88,18 @@ shinyServer(function(input, output) {
   # Output 4
   output$top10 <- renderPlotly({
     
-    # Left join scores& Company Info by cyence_id
-    ex_company$revenue_bins <- ifelse(ex_company$revenue < 5, "0-5M",
-                                      ifelse((ex_company$revenue >= 5) & (ex_company$revenue < 10), "5-10M",
-                                             ifelse((ex_company$revenue >= 10) & (ex_company$revenue < 25), "10-25M",
-                                                    ifelse((ex_company$revenue >= 25) & (ex_company$revenue < 50), "25-50M", 
-                                                           ifelse((ex_company$revenue >= 50) & (ex_company$revenue < 100), "50-100M",
-                                                                  ifelse((ex_company$revenue >= 100) & (ex_company$revenue < 500), "100-500M",
-                                                                         ifelse((ex_company$revenue >= 500) & (ex_company$revenue < 1000), "500M-1B",
-                                                                                ifelse((ex_company$revenue >= 1000) & (ex_company$revenue < 5000), "1-5B",
-                                                                                       ifelse((ex_company$revenue >= 5000) & (ex_company$revenue < 10000), "5-10B","10B& up")))))))))
-    ex_company <- ex_company[(ex_company$cyence_sector == input$sector) & (ex_company$revenue_bins == input$revenue_bin), ]
-    ex_company$cyence_id <- as.character(ex_company$cyence_id)
-    ex_scores <- ex_scores[ex_scores$cyence_id %in% ex_company$cyence_id, ]
-    ex_company_scores <- inner_join(ex_company, ex_scores, by = c("cyence_id" = "cyence_id"))
-    ex_company_scores$run_date <- as.Date(ex_company_scores$run_date)
-    
-    top_unique = ex_company_scores %>%
-      group_by(cyence_id) %>%
-      mutate(cy_change = cy - lag(cy)) %>%
-      filter(run_date == rundate) %>%
-      arrange(desc(cy_change)) %>%
-      distinct(cyence_id)
-    
-    
-    ex_company_scores = ex_company_scores[ex_company_scores$cyence_id %in% as.character(top_unique[1:10,]$cyence_id), ]
+    ex_company_scores <- read.csv(paste(input$sector, ".csv", sep = ""))
+    ex_company_scores <- ex_company_scores[ex_company_scores$revenue_bins == input$revenue_bin, ]
+    top_unique <- unique(ex_company_scores$cyence_id)
     
     myplots <- list()
     
     # for loop
     for (i in 1:10) {
-      ex_company_scores_plot <- ex_company_scores[ex_company_scores$cyence_id == as.character(top_unique[1:10,]$cyence_id)[i], ] 
+      ex_company_scores_plot <- ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]
       ex_company_scores_plot <- melt(ex_company_scores_plot[, c("run_date", "cy", "sus", "mo")], id = "run_date")
-      ex_company_scores_plot$main1 =  paste0("Cyence Scores for ", unique(ex_company_scores[ex_company_scores$cyence_id == as.character(top_unique[1:10,]$cyence_id)[i], ]$company_name))
+      ex_company_scores_plot$main1 =  paste0("Cyence Scores for ", unique(ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]$company_name))
+      ex_company_scores_plot$run_date = as.Date(ex_company_scores_plot$run_date)
       
       p <- ggplot(ex_company_scores_plot, aes(x = run_date, y = value, colour = variable)) + 
         geom_line() +
@@ -122,6 +107,7 @@ shinyServer(function(input, output) {
                       labels = date_format("%b %y"),
                       limits = as.Date(c(rundate-months(5), rundate-months(0))))) +
         xlab("Run Date") + ylab("Score") + 
+        ylim(range(ex_company_scores_plot$value)[1], range(ex_company_scores_plot$value)[2]) +
         theme(
           plot.title = element_text(size = 14, face = "bold"),
           axis.title.x = element_text(size = 12, face = "bold"),
@@ -147,7 +133,7 @@ shinyServer(function(input, output) {
             ggplotly(myplots[[8]]) %>% layout(legend = list(x = 0.1, y = 0.9)), 
             ggplotly(myplots[[9]]) %>% layout(legend = list(x = 0.1, y = 0.9)), 
             ggplotly(myplots[[10]]) %>% layout(legend = list(x = 0.1, y = 0.9)),
-            nrows = 5) %>% layout(title = "Companies with most changes in this month", showlegend = F)
+            nrows = 5) %>% layout(showlegend = F)
     
   })
   
