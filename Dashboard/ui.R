@@ -24,7 +24,8 @@ shinyUI(navbarPage(theme = shinytheme("flatly"), "Monthly Visualizations of Cyen
                               tabPanel("HeatMap",
                                        fluidPage(
                                          title = "Heatmap",
-                                         plotlyOutput("heatmap", height = "800px")
+                                         plotlyOutput("heatmap", height = "800px"),
+                                         h4(textOutput("legend_explanation"))
                                        )),
                               
                               # third sub-panel
@@ -47,6 +48,8 @@ shinyUI(navbarPage(theme = shinytheme("flatly"), "Monthly Visualizations of Cyen
                                                                      "100-500M", "500M-1B", "1-5B", "5-10B", "10B& up")), 
                                              hr(),
                                              helpText("Data from latest month"),
+                                             hr(),
+                                             checkboxInput("gap_or_not", "Include companies in GAP", value = FALSE),
                                              hr(),
                                              helpText("Notice that some companies only have two months' data (which were potentially in GAP)")
                                            ),
