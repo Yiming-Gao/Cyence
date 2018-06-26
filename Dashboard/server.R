@@ -54,17 +54,20 @@ shinyServer(function(input, output) {
     
     # read data
     sector_scores_avg = read.csv("sector_scores_avg.csv")
+    var = input$score_type
     
     # basic heatmap
     p <- ggplot(sector_scores_avg, aes(revenue_bins, cyence_sector,
                                        # customize the tooltip
                                        text = paste("Sector: ", cyence_sector, "\n",
                                                     "Number of Companies: ", n_companies, "\n",
-                                                    "Average score: ", round(sector_cy_avg, 2), "\n",
-                                                    "Change in score: ", round(cy_change, 3)))) + 
-      geom_tile(aes(fill = cy_change), colour = "white") + 
-      scale_fill_gradient2(low = "steelblue", mid = "white", high = "red", midpoint = 0, limits = range(sector_scores_avg$cy_change), name = "Change in Score") +
-      labs(title = paste0("Change in Cyence Score from \n", month.name[month(rundate)-1], " to ", month.name[month(rundate)])) +
+                                                    "Average score: ", round(sector_scores_avg[, names(sector_scores_avg) == as.name(paste0("sector_", var, "_avg"))], 2), "\n",
+                                                    "Change in score: ", round(sector_scores_avg[, names(sector_scores_avg) == as.name(paste0(var, "_change"))], 2)))) + 
+      geom_tile(aes(fill = sector_scores_avg[, names(sector_scores_avg) == as.name(paste0(var, "_change"))]), colour = "white") + 
+      scale_y_discrete(limits = rev(unique(sector_scores_avg$cyence_sector))) +
+      scale_x_discrete(limits = c("0-5M", "5-10M", "10-25M", "25-50M", "50-100M", "100-500M", "500M-1B", "1-5B", "5-10B", "10B& up")) +
+      scale_fill_gradient2(low = "steelblue", mid = "white", high = "red", midpoint = 0, limits = range(sector_scores_avg[, names(sector_scores_avg) == as.name(paste0(var, "_change"))]), name = "Change in Score") +
+      labs(title = paste0("Score Changes from \n", month.name[month(rundate)-1], " to ", month.name[month(rundate)])) +
       xlab("Revenue Bins") + ylab("Cyence Sector") +
       theme(
         plot.title = element_text(size = 14, face = "bold"),
@@ -78,9 +81,9 @@ shinyServer(function(input, output) {
   })
   
   
-  # Output 3
+  # Output 3: need update every month
   output$text_revenue_bin <- renderPrint({
-    cat("Ten companies with greatest score change in ", input$sector, " with revenue ", input$revenue_bin, ".")
+    cat("Ten companies with greatest Cyence rating change in ", input$sector, " with revenue ", input$revenue_bin, " from May to June.")
   })
   
   
@@ -90,7 +93,13 @@ shinyServer(function(input, output) {
     
     ex_company_scores <- read.csv(paste(input$sector, ".csv", sep = ""))
     ex_company_scores <- ex_company_scores[ex_company_scores$revenue_bins == input$revenue_bin, ]
-    top_unique <- unique(ex_company_scores$cyence_id)
+    ex_company_scores_temp = ex_company_scores %>% group_by(cyence_id) %>% summarise(n_months = n())
+    
+    if (input$gap_or_not == FALSE) {
+      top_unique <- unique(ex_company_scores_temp[ex_company_scores_temp$n_months == 6, ]$cyence_id)
+    }
+    
+    else top_unique <- unique(ex_company_scores$cyence_id)
     
     myplots <- list()
     
@@ -123,18 +132,16 @@ shinyServer(function(input, output) {
       myplots[[i]] <- p
     }
     
-    subplot(ggplotly(myplots[[1]]) %>% layout(legend = list(x = 0.1, y = 0.9)), 
-            ggplotly(myplots[[2]]) %>% layout(legend = list(x = 0.1, y = 0.9)), 
-            ggplotly(myplots[[3]]) %>% layout(legend = list(x = 0.1, y = 0.9)), 
-            ggplotly(myplots[[4]]) %>% layout(legend = list(x = 0.1, y = 0.9)), 
-            ggplotly(myplots[[5]]) %>% layout(legend = list(x = 0.1, y = 0.9)),
-            ggplotly(myplots[[6]]) %>% layout(legend = list(x = 0.1, y = 0.9)), 
-            ggplotly(myplots[[7]]) %>% layout(legend = list(x = 0.1, y = 0.9)), 
-            ggplotly(myplots[[8]]) %>% layout(legend = list(x = 0.1, y = 0.9)), 
-            ggplotly(myplots[[9]]) %>% layout(legend = list(x = 0.1, y = 0.9)), 
-            ggplotly(myplots[[10]]) %>% layout(legend = list(x = 0.1, y = 0.9)),
-            nrows = 5) %>% layout(showlegend = F)
+    subplot(ggplotly(myplots[[1]]), ggplotly(myplots[[2]]), 
+            ggplotly(myplots[[3]]), ggplotly(myplots[[4]]), 
+            ggplotly(myplots[[5]]), ggplotly(myplots[[6]]), 
+            ggplotly(myplots[[7]]), ggplotly(myplots[[8]]), 
+            ggplotly(myplots[[9]]), ggplotly(myplots[[10]]),
+            nrows = 5) %>% layout(showlegend = T)
     
   })
   
+  output$legend_explanation <- renderPrint({
+    cat("Red cells have their scores increased (riskier), and blue cells have their scores decreased.")
+  })
 })
