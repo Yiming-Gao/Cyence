@@ -9,7 +9,7 @@
 library(shiny)
 library(dplyr)
 
-shinyUI(navbarPage(theme = shinytheme("flatly"), "Monthly Visualizations of Cyence Scores",
+shinyUI(navbarPage(theme = shinytheme("readable"), "Monthly Visualizations of Cyence Scores",
                    # first tab panel (with two sub-panels)
                    navbarMenu("US",
                               # first sub-panel
@@ -23,9 +23,21 @@ shinyUI(navbarPage(theme = shinytheme("flatly"), "Monthly Visualizations of Cyen
                               # second sub-panel
                               tabPanel("HeatMap",
                                        fluidPage(
-                                         title = "Heatmap",
-                                         plotlyOutput("heatmap", height = "800px"),
-                                         h4(textOutput("legend_explanation"))
+                                         sidebarLayout(
+                                           sidebarPanel(
+                                             radioButtons("score_type", "Score Type",
+                                                          c("Cyence rating" = "cy",
+                                                            "Susceptibility" = "sus",
+                                                            "Motivation" = "mo"),
+                                                          selected = NULL),
+                                             width = 4 # sidebar width
+                                           ),
+                                           
+                                           mainPanel(
+                                             plotlyOutput("heatmap", height = "800px"),
+                                             h5(textOutput("legend_explanation"))
+                                           )
+                                         )
                                        )),
                               
                               # third sub-panel
@@ -49,15 +61,19 @@ shinyUI(navbarPage(theme = shinytheme("flatly"), "Monthly Visualizations of Cyen
                                              hr(),
                                              helpText("Data from latest month"),
                                              hr(),
-                                             checkboxInput("gap_or_not", "Include companies in GAP", value = FALSE),
-                                             hr(),
-                                             helpText("Notice that some companies only have two months' data (which were potentially in GAP)")
+                                             checkboxInput("gap_or_not", "Include companies in GAP", value = FALSE)
                                            ),
                                            
                                            # create a spot for time series plots
                                            mainPanel(
-                                             h4(textOutput("text_revenue_bin")),
-                                             plotlyOutput("top10", height = "1000px")
+                                             tabsetPanel(
+                                               tabPanel("Time Series",
+                                                        h5(textOutput("text_revenue_bin")),
+                                                        plotlyOutput("top10", height = "1000px")),
+                                               tabPanel("Normalized Scores",
+                                                        h5(textOutput("text_diverging")),
+                                                        plotlyOutput("diverging", height = "1000px"))
+                                             )
                                            )
                                          )
                                        ))
