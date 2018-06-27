@@ -137,11 +137,64 @@ shinyServer(function(input, output) {
             ggplotly(myplots[[5]]), ggplotly(myplots[[6]]), 
             ggplotly(myplots[[7]]), ggplotly(myplots[[8]]), 
             ggplotly(myplots[[9]]), ggplotly(myplots[[10]]),
-            nrows = 5) %>% layout(showlegend = T)
+            nrows = 5) %>% layout(showlegend = F)
     
   })
   
+  
+  # Output 5
+  output$diverging <- renderPlotly({
+    
+    ex_company_scores1 <- read.csv(paste(input$sector, ".csv", sep = ""))
+    ex_company_scores1 <- ex_company_scores[ex_company_scores$revenue_bins == input$revenue_bin, ]
+    
+    # tell gap or not
+    ex_company_scores1_temp = ex_company_scores1 %>% group_by(cyence_id) %>% summarise(n_months = n())
+    
+    
+    if (input$gap_or_not == FALSE) {
+      ex_company_scores1 <- ex_company_scores1[ex_company_scores1$cyence_id %in% (ex_company_scores1_temp[ex_company_scores1_temp$n_months == 6, ]$cyence_id), ]
+    }
+    
+    else ex_company_scores1 <- ex_company_scores1
+    
+    # data preparation
+    ex_company_scores1 <- ex_company_scores1 %>% group_by(company_name) %>% summarise(cy_avg = mean(cy))
+    ex_company_scores1$cy_avg_z <- round((ex_company_scores1$cy_avg - mean(ex_company_scores1$cy_avg))/ sd(ex_company_scores1$cy_avg), 2)
+    ex_company_scores1$cy_avg_type <- ifelse(ex_company_scores1$cy_avg_z < 0, "below average (safe)", "above average (risky)")
+    ex_company_scores1 <- ex_company_scores1[order(ex_company_scores1$cy_avg_z), ]
+    ex_company_scores1 <- rbind(head(ex_company_scores1, 20), tail(ex_company_scores1, 20))
+    ex_company_scores1$company_name <- factor(ex_company_scores1$company_name, levels = ex_company_scores1$company_name) # convert to factor to retain sorted order in plot
+    
+    
+    # Diverging Barcharts
+    theme_set(theme_bw())
+    
+    p <- ggplot(ex_company_scores1, aes(x = company_name, y = cy_avg_z, label = cy_avg_z,
+                                        # customize the tooltip
+                                        text = paste("Normalized score: ", cy_avg_z))) +
+      geom_bar(stat = "identity", aes(fill = cy_avg_type), width = 0.4) +
+      scale_fill_manual(name = "Risk",
+                        labels = c("Above Average", "Below Average"),
+                        values = c("above (risky)" = "#f8766d", "below (safe)" = "#00ba38")) +
+      labs(subtitle = "Normalized cyence scores",
+           title = "Diverging Bars") +
+      ylab("Normalized Score") + xlab("Company Name") +
+      coord_flip()
+    
+    
+    ggplotly(p, tooltip = c("text"))
+    
+  })
+  
+  
+  # Some text output
   output$legend_explanation <- renderPrint({
     cat("Red cells have their scores increased (riskier), and blue cells have their scores decreased.")
   })
+  
+  output$text_diverging <- renderPrint({
+    cat("Cyence ratings have been normalized as z score. Those 20 companies with score above zero are marked red and those 20 below are marked green.")
+  })
+
 })
