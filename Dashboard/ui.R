@@ -10,7 +10,7 @@ library(shiny)
 library(dplyr)
 
 shinyUI(navbarPage(theme = shinytheme("readable"), "Monthly Visualizations of Cyence Scores",
-                   # first tab panel (with two sub-panels)
+                   ########## first tab panel (with two sub-panels)
                    navbarMenu("US",
                               # first sub-panel
                               tabPanel("Map",
@@ -51,19 +51,20 @@ shinyUI(navbarPage(theme = shinytheme("readable"), "Monthly Visualizations of Cy
                                            # Define the sidebar with one input
                                            sidebarPanel(
                                              selectInput("sector", "Sector: ",
-                                                         choices = c("Education & Research", "Licensed Professional Services", "Financial Services", "Membership Organizations", "Healthcare",
-                                                                     "Consumer Services", "Wholesale Trade", "Manufacturing", "Hospitality", "Software and Technology Services",
-                                                                     "Non-Profit Organizations", "Business Services", "Publishing", "Retail Trade", "Utilities",
-                                                                     "Transportation Services", "Agriculture & Mining"),
-                                                         selected = "Wholesale Trade"),
+                                                         choices = sort(c("Education & Research", "Licensed Professional Services", "Financial Services", "Membership Organizations", "Healthcare",
+                                                                          "Consumer Services", "Wholesale Trade", "Manufacturing", "Hospitality", "Software and Technology Services",
+                                                                          "Non-Profit Organizations", "Business Services", "Publishing", "Retail Trade", "Utilities",
+                                                                          "Transportation Services", "Agriculture & Mining")),
+                                                         selected = "Agriculture & Mining"),
                                              selectInput("revenue_bin", "Revenue bin: ",
                                                          choices = c("0-5M", "5-10M", "10-25M", "25-50M", "50-100M",
                                                                      "100-500M", "500M-1B", "1-5B", "5-10B", "10B& up"),
-                                                         selected = "50-100M"), 
+                                                         selected = "0-5M"), 
                                              hr(),
-                                             helpText("Data from latest month"),
+                                             checkboxInput("gap_or_not", "Include companies in GAP", value = FALSE),
+                                             checkboxInput("same_y_scale_or_not", "Force same scale for y-axis (only applicable to time series)", value = FALSE),
                                              hr(),
-                                             checkboxInput("gap_or_not", "Include companies in GAP", value = FALSE)
+                                             helpText("The data is from latest month.")
                                            ),
                                            
                                            # create a spot for time series plots
@@ -71,7 +72,7 @@ shinyUI(navbarPage(theme = shinytheme("readable"), "Monthly Visualizations of Cy
                                              tabsetPanel(
                                                tabPanel("Time Series",
                                                         h5(textOutput("text_revenue_bin")),
-                                                        plotlyOutput("top10", height = "1000px")),
+                                                        plotlyOutput("top10", height = "1200px")),
                                                tabPanel("Normalized Scores",
                                                         h5(textOutput("text_diverging")),
                                                         plotlyOutput("diverging", height = "1000px"))
@@ -81,9 +82,103 @@ shinyUI(navbarPage(theme = shinytheme("readable"), "Monthly Visualizations of Cy
                                        ))
                    ),
                    
-                   # second tab panel
-                   tabPanel("EU"),
                    
-                   # third tab panel
-                   tabPanel("JP")
+                   
+                   
+                   ########## second tab panel
+                   navbarMenu("EU",
+                              # first sub-panel
+                              tabPanel("Map",
+                                       fluidPage(
+                                         title = "Map",
+                                         leafletOutput("map_eu", height = "800px")
+                                       )
+                              ),
+                              
+                              # second sub-panel
+                              tabPanel("HeatMap",
+                                       fluidPage(
+                                         sidebarLayout(
+                                           sidebarPanel(
+                                             radioButtons("score_type_eu", "Score Type",
+                                                          c("Cyence rating" = "cy",
+                                                            "Susceptibility" = "sus",
+                                                            "Motivation" = "mo"),
+                                                          selected = NULL),
+                                             
+                                             hr(),
+                                             helpText("Notice that there might not be enough data for EU schema."),
+                                             
+                                             width = 4 # sidebar width
+                                           ),
+                                           
+                                           mainPanel(
+                                             plotlyOutput("heatmap_eu", height = "800px"),
+                                             h5(textOutput("legend_explanation_eu"))
+                                           )
+                                         )
+                                       )),
+                              
+                              # third sub-panel
+                              # generate a row with a sidebar
+                              tabPanel("Companies by Sector",
+                                       fluidPage(
+                                         titlePanel("Changes by Cyence Sector"),
+                                         
+                                         # generate a row with a sidebar
+                                         sidebarLayout(
+                                           # Define the sidebar with one input
+                                           sidebarPanel(
+                                             selectInput("sector_eu", "Sector: ",
+                                                         choices = sort(c("Education & Research", "Licensed Professional Services", "Financial Services", "Membership Organizations", "Healthcare",
+                                                                          "Consumer Services", "Wholesale Trade", "Manufacturing", "Hospitality", "Software and Technology Services",
+                                                                          "Non-Profit Organizations", "Business Services", "Publishing", "Retail Trade", "Utilities",
+                                                                          "Transportation Services", "Agriculture & Mining")),
+                                                         selected = "Agriculture & Mining"),
+                                             
+                                             selectInput("revenue_bin_eu", "Revenue bin: ",
+                                                         choices = c("0-5M", "5-10M", "10-25M", "25-50M", "50-100M",
+                                                                     "100-500M", "500M-1B", "1-5B", "5-10B", "10B& up"),
+                                                         selected = "100-500M"), 
+                                             hr(),
+                                             checkboxInput("gap_or_not_eu", "Include companies in GAP", value = FALSE),
+                                             checkboxInput("same_y_scale_or_not_eu", "Force same scale for y-axis (only applicable to time series)", value = FALSE),
+                                             hr(),
+                                             helpText("The data is from latest month.")
+                                           ),
+                                           
+                                           # create a spot for time series plots
+                                           mainPanel(
+                                             tabsetPanel(
+                                               tabPanel("Time Series",
+                                                        h5(textOutput("text_revenue_bin_eu")),
+                                                        plotlyOutput("top10_eu", height = "1200px")),
+                                               tabPanel("Normalized Scores",
+                                                        h5(textOutput("text_diverging_eu")),
+                                                        plotlyOutput("diverging_eu", height = "1000px"))
+                                             )
+                                           )
+                                         )
+                                       ))
+                   ),
+                   
+                   
+                   
+                   ########### third tab panel
+                   navbarMenu("JP"),
+                   
+                   ########### fourth tab panel
+                   tabPanel("About", 
+                            "This dashboard is updated monthly at XXX.",
+                            br(),
+                            br(),
+                            "Please visit",
+                            a("this site", href = "https://cyence.atlassian.net/wiki/spaces/DS/overview"),
+                            "for more information on data collection and aggregation.",
+                            br(),
+                            br(),
+                            "Any questions or comments can be sent to",
+                            br(),
+                            "Mia Gao: ",
+                            a("ygao@guidewire.com", href = "mailto:ygao@guidewire.com"))
 ))
