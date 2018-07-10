@@ -165,7 +165,73 @@ shinyUI(navbarPage(theme = shinytheme("readable"), "Monthly Visualizations of Cy
                    
                    
                    ########### third tab panel
-                   navbarMenu("JP"),
+                   navbarMenu("JP",
+                              # first sub-panel
+                              tabPanel("HeatMap",
+                                       fluidPage(
+                                         sidebarLayout(
+                                           sidebarPanel(
+                                             radioButtons("score_type_jp", "Score Type",
+                                                          c("Cyence rating" = "cy",
+                                                            "Susceptibility" = "sus",
+                                                            "Motivation" = "mo"),
+                                                          selected = NULL),
+                                             
+                                             hr(),
+                                             helpText("Notice that there might not be enough data for JP schema."),
+                                             
+                                             width = 4 # sidebar width
+                                           ),
+                                           
+                                           mainPanel(
+                                             plotlyOutput("heatmap_jp", height = "800px"),
+                                             h5(textOutput("legend_explanation_jp"))
+                                           )
+                                         )
+                                       )),
+                              
+                              # second sub-panel
+                              # generate a row with a sidebar
+                              tabPanel("Companies by Sector",
+                                       fluidPage(
+                                         titlePanel("Changes by Cyence Sector"),
+                                         
+                                         # generate a row with a sidebar
+                                         sidebarLayout(
+                                           # Define the sidebar with one input
+                                           sidebarPanel(
+                                             selectInput("sector_jp", "Sector: ",
+                                                         choices = sort(c("Education & Research", "Licensed Professional Services", "Financial Services", "Membership Organizations", "Healthcare",
+                                                                          "Consumer Services", "Wholesale Trade", "Manufacturing", "Hospitality", "Software and Technology Services",
+                                                                          "Non-Profit Organizations", "Business Services", "Publishing", "Retail Trade", "Utilities",
+                                                                          "Transportation Services", "Agriculture & Mining")),
+                                                         selected = "Agriculture & Mining"),
+                                             
+                                             selectInput("revenue_bin_jp", "Revenue bin: ",
+                                                         choices = c("0-5M", "5-10M", "10-25M", "25-50M", "50-100M",
+                                                                     "100-500M", "500M-1B", "1-5B", "5-10B", "10B& up"),
+                                                         selected = "100-500M"), 
+                                             hr(),
+                                             checkboxInput("gap_or_not_jp", "Include companies in GAP", value = FALSE),
+                                             checkboxInput("same_y_scale_or_not_jp", "Force same scale for y-axis (only applicable to time series)", value = FALSE),
+                                             hr(),
+                                             helpText("The data is from latest month.")
+                                           ),
+                                           
+                                           # create a spot for time series plots
+                                           mainPanel(
+                                             tabsetPanel(
+                                               tabPanel("Time Series",
+                                                        h5(textOutput("text_revenue_bin_jp")),
+                                                        plotlyOutput("top10_jp", height = "1200px")),
+                                               tabPanel("Normalized Scores",
+                                                        h5(textOutput("text_diverging_jp")),
+                                                        plotlyOutput("diverging_jp", height = "1000px"))
+                                             )
+                                           )
+                                         )
+                                       ))
+                   ),
                    
                    ########### fourth tab panel
                    tabPanel("About", 
