@@ -127,6 +127,33 @@ ex_company_scores <- inner_join(ex_company, ex_scores, by = c("cyence_id" = "cye
 ex_company_scores$run_date <- as.Date(ex_company_scores$run_date)
 
 
+# get top companies across all sectors/ revenue bins
+temp = ex_company_scores
+temp_top_unique = temp %>%
+  group_by(cyence_id) %>%
+  mutate(cy_change = cy - lag(cy)) %>%
+  filter(run_date == rundate) %>%
+  arrange(desc(cy_change)) %>%
+  distinct(cyence_id)
+
+temp_ex_company_scores = data.frame(X.x = integer(),
+                                    cyence_id = character(),
+                                    company_name = factor(),
+                                    cyence_sector = factor(),
+                                    revenue = numeric(),
+                                    income = numeric(),
+                                    employees = integer(),
+                                    revenue_bins = character(),
+                                    X.y = integer(),
+                                    run_date = as.Date(character()),
+                                    cy = numeric(),
+                                    mo = numeric(),
+                                    sus = numeric())
+
+temp_ex_company_scores = rbind(temp_ex_company_scores, temp[temp$cyence_id %in% as.character(temp_top_unique[1:200,]$cyence_id), ])
+write.csv(temp_ex_company_scores, paste("All", ".csv", sep = ""))
+
+
 # get top companies in every sector (200 to get enough valid obs)
 for (sector in c("Education & Research", "Licensed Professional Services", "Financial Services", "Membership Organizations", "Healthcare",
                  "Consumer Services", "Wholesale Trade", "Manufacturing", "Hospitality", "Software and Technology Services",
@@ -305,6 +332,33 @@ ex_company_scores <- inner_join(ex_company, ex_scores, by = c("cyence_id" = "cye
 ex_company_scores$run_date <- as.Date(ex_company_scores$run_date)
 
 
+# get top companies across all sectors/ revenue bins
+temp = ex_company_scores
+temp_top_unique = temp %>%
+  group_by(cyence_id) %>%
+  mutate(cy_change = cy - lag(cy)) %>%
+  filter(run_date == rundate) %>%
+  arrange(desc(cy_change)) %>%
+  distinct(cyence_id)
+
+temp_ex_company_scores = data.frame(X.x = integer(),
+                                    cyence_id = character(),
+                                    company_name = factor(),
+                                    cyence_sector = factor(),
+                                    revenue = numeric(),
+                                    income = numeric(),
+                                    employees = integer(),
+                                    revenue_bins = character(),
+                                    X.y = integer(),
+                                    run_date = as.Date(character()),
+                                    cy = numeric(),
+                                    mo = numeric(),
+                                    sus = numeric())
+
+temp_ex_company_scores = rbind(temp_ex_company_scores, temp[temp$cyence_id %in% as.character(temp_top_unique[1:200,]$cyence_id), ])
+write.csv(temp_ex_company_scores, paste("All_eu", ".csv", sep = ""))
+
+
 # get top companies in every sector (200 to get enough valid obs)
 for (sector in c("Education & Research", "Licensed Professional Services", "Financial Services", "Membership Organizations", "Healthcare",
                  "Consumer Services", "Wholesale Trade", "Manufacturing", "Hospitality", "Software and Technology Services",
@@ -469,6 +523,34 @@ ex_company$revenue_bins <- ifelse(ex_company$revenue < 5, "0-5M",
 ex_scores <- ex_scores[ex_scores$cyence_id %in% ex_company$cyence_id, ]
 ex_company_scores <- inner_join(ex_company, ex_scores, by = c("cyence_id" = "cyence_id"))
 ex_company_scores$run_date <- as.Date(ex_company_scores$run_date)
+
+
+# get top companies across all sectors/ revenue bins
+temp = ex_company_scores
+temp_top_unique = temp %>%
+  group_by(cyence_id) %>%
+  mutate(cy_change = cy - lag(cy)) %>%
+  filter(run_date == rundate) %>%
+  arrange(desc(cy_change)) %>%
+  distinct(cyence_id)
+
+temp_ex_company_scores = data.frame(X.x = integer(),
+                                    cyence_id = character(),
+                                    company_name = factor(),
+                                    cyence_sector = factor(),
+                                    revenue = numeric(),
+                                    income = numeric(),
+                                    employees = integer(),
+                                    revenue_bins = character(),
+                                    X.y = integer(),
+                                    run_date = as.Date(character()),
+                                    cy = numeric(),
+                                    mo = numeric(),
+                                    sus = numeric())
+
+temp_ex_company_scores = rbind(temp_ex_company_scores, temp[temp$cyence_id %in% as.character(temp_top_unique[1:200,]$cyence_id), ])
+write.csv(temp_ex_company_scores, paste("All_jp", ".csv", sep = ""))
+
 
 
 # get top companies in every sector (200 to get enough valid obs)
