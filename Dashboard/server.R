@@ -83,7 +83,7 @@ shinyServer(function(input, output) {
   
   # US Output 3: need update every month
   output$text_revenue_bin <- renderPrint({
-    cat("Ten companies with greatest Cyence rating change in ", input$sector, " with revenue ", input$revenue_bin, " from May to June.")
+    cat("Ten companies with greatest Cyence rating change in ", input$sector, " with revenue ", input$revenue_bin, " from June to July.")
   })
   
   
@@ -92,13 +92,18 @@ shinyServer(function(input, output) {
   output$top10 <- renderPlotly({
     
     ex_company_scores <- read.csv(paste(input$sector, ".csv", sep = ""))
-    ex_company_scores <- ex_company_scores[ex_company_scores$revenue_bins == input$revenue_bin, ]
+    
+    if (input$revenue_bin != "All") {
+      ex_company_scores <- ex_company_scores[ex_company_scores$revenue_bins == input$revenue_bin, ]
+    }
+    else ex_company_scores <- ex_company_scores
+
     ex_company_scores_temp = ex_company_scores %>% group_by(cyence_id) %>% summarise(n_months = n())
+    
     
     if (input$gap_or_not == FALSE) {
       top_unique <- unique(ex_company_scores_temp[ex_company_scores_temp$n_months == 6, ]$cyence_id)
     }
-    
     else top_unique <- unique(ex_company_scores$cyence_id)
     
     myplots <- list()
@@ -153,7 +158,11 @@ shinyServer(function(input, output) {
   output$diverging <- renderPlotly({
     
     ex_company_scores1 <- read.csv(paste(input$sector, ".csv", sep = ""))
-    ex_company_scores1 <- ex_company_scores1[ex_company_scores1$revenue_bins == input$revenue_bin, ]
+    
+    if (input$revenue_bin != "All") {
+      ex_company_scores1 <- ex_company_scores1[ex_company_scores1$revenue_bins == input$revenue_bin, ]
+    }
+    else ex_company_scores1 <- ex_company_scores1
     
     # tell gap or not
     ex_company_scores1_temp = ex_company_scores1 %>% group_by(cyence_id) %>% summarise(n_months = n())
@@ -286,7 +295,7 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
   
   # EU Output 3: need update every month
   output$text_revenue_bin_eu <- renderPrint({
-    cat("Ten companies with greatest Cyence rating change in ", input$sector_eu, " with revenue ", input$revenue_bin_eu, " from May to June.")
+    cat("Ten companies with greatest Cyence rating change in ", input$sector_eu, " with revenue ", input$revenue_bin_eu, " from June to July.")
   })
   
   
@@ -295,7 +304,11 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
   output$top10_eu <- renderPlotly({
     
     ex_company_scores <- read.csv(paste(input$sector_eu, "_eu.csv", sep = ""))
-    ex_company_scores <- ex_company_scores[ex_company_scores$revenue_bins == input$revenue_bin_eu, ]
+    if (input$revenue_bin_eu != "All") {
+      ex_company_scores <- ex_company_scores[ex_company_scores$revenue_bins == input$revenue_bin_eu, ]
+    }
+    else ex_company_scores <- ex_company_scores
+    
     ex_company_scores_temp = ex_company_scores %>% group_by(cyence_id) %>% summarise(n_months = n())
     
     if (input$gap_or_not_eu == FALSE) {
@@ -360,7 +373,10 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
   output$diverging_eu <- renderPlotly({
     
     ex_company_scores1 <- read.csv(paste(input$sector_eu, "_eu.csv", sep = ""))
-    ex_company_scores1 <- ex_company_scores1[ex_company_scores1$revenue_bins == input$revenue_bin_eu, ]
+    if (input$revenue_bin_eu != "All") {
+      ex_company_scores1 <- ex_company_scores1[ex_company_scores1$revenue_bins == input$revenue_bin_eu, ]
+    }
+    else ex_company_scores1 <- ex_company_scores1
     
     # tell gap or not
     ex_company_scores1_temp = ex_company_scores1 %>% group_by(cyence_id) %>% summarise(n_months = n())
@@ -463,7 +479,11 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
   output$top10_jp <- renderPlotly({
     
     ex_company_scores <- read.csv(paste(input$sector_jp, "_jp.csv", sep = ""))
-    ex_company_scores <- ex_company_scores[ex_company_scores$revenue_bins == input$revenue_bin_jp, ]
+    if (input$revenue_bin_jp != "All") {
+      ex_company_scores <- ex_company_scores[ex_company_scores$revenue_bins == input$revenue_bin_jp, ]
+    }
+    else ex_company_scores <- ex_company_scores
+    
     ex_company_scores_temp = ex_company_scores %>% group_by(cyence_id, run_date) %>% 
       summarise(cy = mean(cy), mo = mean(mo), sus = mean(sus))
     ex_company_scores_temp = ex_company_scores_temp %>% group_by(cyence_id) %>% summarise(n_months = n())
@@ -530,7 +550,10 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
   output$diverging_jp <- renderPlotly({
     
     ex_company_scores1 <- read.csv(paste(input$sector_jp, "_jp.csv", sep = ""))
-    ex_company_scores1 <- ex_company_scores1[ex_company_scores1$revenue_bins == input$revenue_bin_jp, ]
+    if (input$revenue_bin_jp != "All") {
+      ex_company_scores1 <- ex_company_scores1[ex_company_scores1$revenue_bins == input$revenue_bin_jp, ]
+    }
+    else ex_company_scores1 <- ex_company_scores1
     
     # tell gap or not
     ex_company_scores1_temp = ex_company_scores1 %>% group_by(cyence_id) %>% summarise(n_months = n())
