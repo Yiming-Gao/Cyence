@@ -8,6 +8,7 @@
 # Note that global.R will be loaded before either ui.R or server.R
 
 # Define server logic required to draw a histogram
+rundate = as.Date("2018-08-01")
 shinyServer(function(input, output) {
   
   # US Output 1
@@ -83,14 +84,14 @@ shinyServer(function(input, output) {
   
   # US Output 3: need update every month
   output$text_revenue_bin <- renderPrint({
-    cat("Ten companies with greatest Cyence rating change in ", input$sector, " with revenue ", input$revenue_bin, " from June to July.")
+    cat("Ten companies with greatest Cyence rating change in ", input$sector, " with revenue ", input$revenue_bin, " from July to August.")
   })
   
   
   
   # US Output 4
   output$top10 <- renderPlotly({
-    
+    # read data
     ex_company_scores <- read.csv(paste(input$sector, ".csv", sep = ""))
     
     if (input$revenue_bin != "All") {
@@ -100,7 +101,7 @@ shinyServer(function(input, output) {
 
     ex_company_scores_temp = ex_company_scores %>% group_by(cyence_id) %>% summarise(n_months = n())
     
-    
+    # checkbox: gap
     if (input$gap_or_not == FALSE) {
       top_unique <- unique(ex_company_scores_temp[ex_company_scores_temp$n_months == 6, ]$cyence_id)
     }
@@ -112,7 +113,8 @@ shinyServer(function(input, output) {
     for (i in 1:10) {
       ex_company_scores_plot <- ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]
       ex_company_scores_plot <- melt(ex_company_scores_plot[, c("run_date", "cy", "sus", "mo")], id = "run_date")
-      ex_company_scores_plot$main1 =  paste0("Cyence Scores for ", unique(ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]$company_name))
+      ex_company_scores_plot$main1 =  paste0("Cyence Scores for ", unique(ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]$company_name),
+                                             "\n Cyence_ID= ",unique(ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]$cyence_id))
       ex_company_scores_plot$run_date = as.Date(ex_company_scores_plot$run_date)
       
       p <- ggplot(ex_company_scores_plot, aes(x = run_date, y = value, colour = variable)) + 
@@ -133,7 +135,7 @@ shinyServer(function(input, output) {
         geom_point(show.legend = FALSE) +
         guides(colour = FALSE) 
       
-      # Force y-axis to be the same
+      # checkbox: Force y-axis to be the same
       if (input$same_y_scale_or_not == FALSE) {
         p <- p + ylim(range(ex_company_scores_plot$value)[1], range(ex_company_scores_plot$value)[2])
       }
@@ -156,18 +158,17 @@ shinyServer(function(input, output) {
   
   # US Output 5
   output$diverging <- renderPlotly({
-    
+    # read data
     ex_company_scores1 <- read.csv(paste(input$sector, ".csv", sep = ""))
     
     if (input$revenue_bin != "All") {
       ex_company_scores1 <- ex_company_scores1[ex_company_scores1$revenue_bins == input$revenue_bin, ]
     }
     else ex_company_scores1 <- ex_company_scores1
-    
-    # tell gap or not
+   
     ex_company_scores1_temp = ex_company_scores1 %>% group_by(cyence_id) %>% summarise(n_months = n())
     
-    
+    # checkbox: Gap
     if (input$gap_or_not == FALSE) {
       ex_company_scores1 <- ex_company_scores1[ex_company_scores1$cyence_id %in% (ex_company_scores1_temp[ex_company_scores1_temp$n_months == 6, ]$cyence_id), ]
     }
@@ -295,7 +296,7 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
   
   # EU Output 3: need update every month
   output$text_revenue_bin_eu <- renderPrint({
-    cat("Ten companies with greatest Cyence rating change in ", input$sector_eu, " with revenue ", input$revenue_bin_eu, " from June to July.")
+    cat("Ten companies with greatest Cyence rating change in ", input$sector_eu, " with revenue ", input$revenue_bin_eu, " from July to August.")
   })
   
   
@@ -327,7 +328,8 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
       
       ex_company_scores_plot <- ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]
       ex_company_scores_plot <- melt(ex_company_scores_plot[, c("run_date", "cy", "sus", "mo")], id = "run_date")
-      ex_company_scores_plot$main1 =  paste0("Cyence Scores for ", unique(ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]$company_name))
+      ex_company_scores_plot$main1 =  paste0("Cyence Scores for ", unique(ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]$company_name),
+                                             "\n Cyence_ID= ",unique(ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]$cyence_id))
       ex_company_scores_plot$run_date = as.Date(ex_company_scores_plot$run_date)
       
       p <- ggplot(ex_company_scores_plot, aes(x = run_date, y = value, colour = variable)) + 
@@ -470,7 +472,7 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
   
   # JP Output 2: need update every month
   output$text_revenue_bin_jp <- renderPrint({
-    cat("Ten companies with greatest Cyence rating change in ", input$sector_jp, " with revenue ", input$revenue_bin_jp, " from June to July.")
+    cat("Ten companies with greatest Cyence rating change in ", input$sector_jp, " with revenue ", input$revenue_bin_jp, " from July to August.")
   })
   
   
@@ -479,6 +481,7 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
   output$top10_jp <- renderPlotly({
     
     ex_company_scores <- read.csv(paste(input$sector_jp, "_jp.csv", sep = ""))
+    
     if (input$revenue_bin_jp != "All") {
       ex_company_scores <- ex_company_scores[ex_company_scores$revenue_bins == input$revenue_bin_jp, ]
     }
@@ -504,7 +507,8 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
       
       ex_company_scores_plot <- ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]
       ex_company_scores_plot <- melt(ex_company_scores_plot[, c("run_date", "cy", "sus", "mo")], id = "run_date")
-      ex_company_scores_plot$main1 =  paste0("Cyence Scores for ", unique(ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]$company_name))
+      ex_company_scores_plot$main1 =  paste0("Cyence Scores for ", unique(ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]$company_name),
+                                             "\n Cyence_ID= ",unique(ex_company_scores[ex_company_scores$cyence_id == top_unique[i], ]$cyence_id))
       ex_company_scores_plot$run_date = as.Date(ex_company_scores_plot$run_date)
       
       p <- ggplot(ex_company_scores_plot, aes(x = run_date, y = value, colour = variable)) + 
