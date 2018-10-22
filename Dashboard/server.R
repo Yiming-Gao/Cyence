@@ -8,7 +8,7 @@
 # Note that global.R will be loaded before either ui.R or server.R
 
 # Define server logic required to draw a histogram
-rundate = as.Date("2018-08-01")
+rundate = as.Date("2018-10-01")
 shinyServer(function(input, output) {
   
   # US Output 1
@@ -84,7 +84,7 @@ shinyServer(function(input, output) {
   
   # US Output 3: need update every month
   output$text_revenue_bin <- renderPrint({
-    cat("Ten companies with greatest Cyence rating change in ", input$sector, " with revenue ", input$revenue_bin, " from July to August.")
+    cat("Ten companies with greatest Cyence rating change in ", input$sector, " with revenue ", input$revenue_bin, " from August to September.")
   })
   
   
@@ -99,7 +99,7 @@ shinyServer(function(input, output) {
     }
     else ex_company_scores <- ex_company_scores
 
-    ex_company_scores_temp = ex_company_scores %>% group_by(cyence_id) %>% summarise(n_months = n())
+    ex_company_scores_temp = ex_company_scores %>% group_by(cyence_id) %>% dplyr::summarise(n_months = n())
     
     # checkbox: gap
     if (input$gap_or_not == FALSE) {
@@ -166,7 +166,7 @@ shinyServer(function(input, output) {
     }
     else ex_company_scores1 <- ex_company_scores1
    
-    ex_company_scores1_temp = ex_company_scores1 %>% group_by(cyence_id) %>% summarise(n_months = n())
+    ex_company_scores1_temp = ex_company_scores1 %>% group_by(cyence_id) %>% dplyr::summarise(n_months = n())
     
     # checkbox: Gap
     if (input$gap_or_not == FALSE) {
@@ -176,7 +176,7 @@ shinyServer(function(input, output) {
     else ex_company_scores1 <- ex_company_scores1
     
     # data preparation
-    ex_company_scores1 <- ex_company_scores1 %>% group_by(company_name) %>% summarise(cy_avg = mean(cy))
+    ex_company_scores1 <- ex_company_scores1 %>% group_by(company_name) %>% dplyr::summarise(cy_avg = mean(cy))
     ex_company_scores1$cy_avg_z <- round((ex_company_scores1$cy_avg - mean(ex_company_scores1$cy_avg))/ sd(ex_company_scores1$cy_avg), 2)
     ex_company_scores1$cy_avg_type <- ifelse(ex_company_scores1$cy_avg_z < 0, "below average (safe)", "above average (risky)")
     ex_company_scores1 <- ex_company_scores1[order(ex_company_scores1$cy_avg_z), ]
@@ -296,7 +296,7 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
   
   # EU Output 3: need update every month
   output$text_revenue_bin_eu <- renderPrint({
-    cat("Ten companies with greatest Cyence rating change in ", input$sector_eu, " with revenue ", input$revenue_bin_eu, " from July to August.")
+    cat("Ten companies with greatest Cyence rating change in ", input$sector_eu, " with revenue ", input$revenue_bin_eu, " from August to September.")
   })
   
   
@@ -310,7 +310,7 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
     }
     else ex_company_scores <- ex_company_scores
     
-    ex_company_scores_temp = ex_company_scores %>% group_by(cyence_id) %>% summarise(n_months = n())
+    ex_company_scores_temp = ex_company_scores %>% group_by(cyence_id) %>% dplyr::summarise(n_months = n())
     
     if (input$gap_or_not_eu == FALSE) {
       top_unique <- unique(ex_company_scores_temp[ex_company_scores_temp$n_months == 6, ]$cyence_id)
@@ -381,7 +381,7 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
     else ex_company_scores1 <- ex_company_scores1
     
     # tell gap or not
-    ex_company_scores1_temp = ex_company_scores1 %>% group_by(cyence_id) %>% summarise(n_months = n())
+    ex_company_scores1_temp = ex_company_scores1 %>% group_by(cyence_id) %>% dplyr::summarise(n_months = n())
     
     
     if (input$gap_or_not_eu == FALSE) {
@@ -391,7 +391,7 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
     else ex_company_scores1 <- ex_company_scores1
     
     # data preparation
-    ex_company_scores1 <- ex_company_scores1 %>% group_by(company_name) %>% summarise(cy_avg = mean(cy))
+    ex_company_scores1 <- ex_company_scores1 %>% group_by(company_name) %>% dplyr::summarise(cy_avg = mean(cy))
     ex_company_scores1$cy_avg_z <- round((ex_company_scores1$cy_avg - mean(ex_company_scores1$cy_avg))/ sd(ex_company_scores1$cy_avg), 2)
     ex_company_scores1$cy_avg_type <- ifelse(ex_company_scores1$cy_avg_z < 0, "below average (safe)", "above average (risky)")
     ex_company_scores1 <- ex_company_scores1[order(ex_company_scores1$cy_avg_z), ]
@@ -472,7 +472,7 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
   
   # JP Output 2: need update every month
   output$text_revenue_bin_jp <- renderPrint({
-    cat("Ten companies with greatest Cyence rating change in ", input$sector_jp, " with revenue ", input$revenue_bin_jp, " from July to August.")
+    cat("Ten companies with greatest Cyence rating change in ", input$sector_jp, " with revenue ", input$revenue_bin_jp, " from August to September.")
   })
   
   
@@ -488,8 +488,8 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
     else ex_company_scores <- ex_company_scores
     
     ex_company_scores_temp = ex_company_scores %>% group_by(cyence_id, run_date) %>% 
-      summarise(cy = mean(cy), mo = mean(mo), sus = mean(sus))
-    ex_company_scores_temp = ex_company_scores_temp %>% group_by(cyence_id) %>% summarise(n_months = n())
+      dplyr::summarise(cy = mean(cy), mo = mean(mo), sus = mean(sus))
+    ex_company_scores_temp = ex_company_scores_temp %>% group_by(cyence_id) %>% dplyr::summarise(n_months = n())
     
     if (input$gap_or_not_jp == FALSE) {
       top_unique <- unique(ex_company_scores_temp[ex_company_scores_temp$n_months == 6, ]$cyence_id)
@@ -560,7 +560,7 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
     else ex_company_scores1 <- ex_company_scores1
     
     # tell gap or not
-    ex_company_scores1_temp = ex_company_scores1 %>% group_by(cyence_id) %>% summarise(n_months = n())
+    ex_company_scores1_temp = ex_company_scores1 %>% group_by(cyence_id) %>% dplyr::summarise(n_months = n())
     
     
     if (input$gap_or_not_jp == FALSE) {
@@ -570,7 +570,7 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
     else ex_company_scores1 <- ex_company_scores1
     
     # data preparation
-    ex_company_scores1 <- ex_company_scores1 %>% group_by(company_name) %>% summarise(cy_avg = mean(cy))
+    ex_company_scores1 <- ex_company_scores1 %>% group_by(company_name) %>% dplyr::summarise(cy_avg = mean(cy))
     ex_company_scores1$cy_avg_z <- round((ex_company_scores1$cy_avg - mean(ex_company_scores1$cy_avg))/ sd(ex_company_scores1$cy_avg), 2)
     ex_company_scores1$cy_avg_type <- ifelse(ex_company_scores1$cy_avg_z < 0, "below average (safe)", "above average (risky)")
     ex_company_scores1 <- ex_company_scores1[order(ex_company_scores1$cy_avg_z), ]
@@ -612,4 +612,16 @@ Any z-score greater than 3 or less than -3 could be considered as an outlier. Yo
   })
   
   
+  
+  
+  ######################## share table -- software #########################
+  # output$sw_st_coverage <- renderImage({
+  #   
+  #     filename <- normalizePath(file.path('./share_table_coverage_comparison', paste0(str_replace_all(input$product, " ", "_"), ".png")))
+  #     
+  #     # Return a list containing the filename and alt text
+  #     list(src = filename)
+  #     }, 
+  #     
+  #     deleteFile = FALSE)
 })
