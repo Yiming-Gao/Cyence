@@ -8,6 +8,7 @@
 #
 library(shiny)
 library(dplyr)
+library(plotly)
 
 shinyUI(navbarPage(theme = shinytheme("readable"), "Monthly Visualizations of Cyence Scores",
                    ########## first tab panel (with two sub-panels)
@@ -235,6 +236,39 @@ shinyUI(navbarPage(theme = shinytheme("readable"), "Monthly Visualizations of Cy
                    ),
                    
                    ########### fourth tab panel
+                   # navbarMenu("Share Table - Software",
+                   #            # first sub-panel
+                   #            tabPanel("Some plots"),
+                   #            
+                   #            # second sub-panel
+                   #            # generate a row with a sidebar
+                   #            tabPanel("Coverage Changes",
+                   #                     fluidPage(
+                   #                       titlePanel("Coverage increase before and after smoothing"),
+                   #                       
+                   #                       # generate a row with a sidebar
+                   #                       sidebarLayout(
+                   #                         # Define the sidebar with one input
+                   #                         sidebarPanel(
+                   #                           selectInput("product", "Choose product: ",
+                   #                                       choices = c(sort(all_sw$label), selected = "Apache HTTP Server"),
+                   #                           hr(),
+                   #                           helpText("The data is from latest month.")
+                   #                         ),
+                   #                         
+                   #                         # output plots from share_table_coverage_comparison folder
+                   #                         mainPanel(
+                   #                           imageOutput("sw_st_coverage", height = "800px")
+                   #                           # h5(textOutput("legend_explanation_jp"))
+                   #                         )
+                   #                       )
+                   #                     ))
+                   # )),
+                   
+                   
+                   
+                   
+                   ########### fifth tab panel
                    tabPanel("About", 
                             "This dashboard is updated monthly.",
                             br(),
