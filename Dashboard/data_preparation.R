@@ -1,10 +1,26 @@
 # Run the following codes every time before running the app
 # Change the rundate to latest date
+library(magrittr)
+library(RPostgreSQL)
+library(lubridate)
+library(iptools)
+library(dplyr)
+library(ggrepel)
+library(stringr)
+library(tidyr)
+library(lubridate)
+library(data.table)
+library(plyr)
+library(scales)
+library(zoo)
+library(odbc)
+library(tibble)
+library(gridExtra)
 setwd("/Users/ygao/Desktop/Dashboard/Code/try")
 
 ## 1. US TAB STARTS
 # Connect to database
-rundate = as.Date('2018-07-01')
+rundate = as.Date('2018-10-01')
 
 # Connect to databases
 drv <- dbDriver("PostgreSQL")
@@ -209,7 +225,7 @@ for (sector in c("Education & Research", "Licensed Professional Services", "Fina
 
 ## 2. EU TAB STARTS
 # Connect to database
-rundate = as.Date('2018-07-01')
+rundate = as.Date('2018-10-01')
 
 # Connect to databases
 drv <- dbDriver("PostgreSQL")
@@ -419,7 +435,7 @@ for (sector in c("Education & Research", "Licensed Professional Services", "Fina
 
 ## 3. JP TAB STARTS
 # Connect to database
-rundate = as.Date('2018-07-01')
+rundate = as.Date('2018-10-01')
 
 # Connect to databases
 drv <- dbDriver("PostgreSQL")
@@ -590,3 +606,100 @@ for (sector in c("Education & Research", "Licensed Professional Services", "Fina
 
 ## JP TAB ENDS
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Share table review starts
+# Pull all agg_ids
+connect_to_redshift <- function(){
+  drv <- dbDriver("PostgreSQL")
+  var_names <- c("RED_DB_NAME", "RED_DB_HOST", "RED_DB_PORT", "RED_DB_USER", "RED_DB_PASS")
+  aws <- Sys.getenv(var_names)
+  con <- dbConnect(drv, dbname=aws[1],host=aws[2],port=aws[3],user=aws[4],password=aws[5])
+  return(con)
+}
+
+con <- connect_to_redshift()
+query <- paste0("select a.sw_agg_id, b.label from (select sw_agg_id, cnt from (select sw_agg_id, count(distinct cyence_id) as cnt from dev_aggregation_monthly_v3.software_share_all_1 group by sw_agg_id order by cnt desc)) a left join aggregation_monthly_v3.software_agg b on a.sw_agg_id=b.agg_id order by a.sw_agg_id")
+all_sw <- dbGetQuery(con, query) %>% as.data.table()
+all_sw$sw_agg_id = as.character(all_sw$sw_agg_id)
+dbDisconnect(con)
+
+
+### read csvs
+raw_all = list()
+smoothing_all = list()
+for (i in 1:9) {
+  filename_raw = paste0("raw_all_", i, ".csv")
+  filename_smoothing = paste0("smoothing_all_", i, ".csv")
+  raw_all[[i]] = fread(filename_raw) %>% mutate(cyence_id = as.character(cyence_id), run_date = as.Date(run_date)) %>% select(cyence_id, run_date, sw_agg_id, stable_flag)
+  smoothing_all[[i]] = fread(filename_smoothing) %>% mutate(cyence_id = as.character(cyence_id), run_date = as.Date(run_date)) %>% select(cyence_id, run_date, sw_agg_id, expiration_flag)
+}
+
+plot_coverage_comparison <- function(input_sw_agg_id = "100005") {
+  # data to use
+  data1 = raw_all
+  data2= smoothing_all
+  
+  # empty dataframe for plotting
+  plotdata = data.frame(run_date = rep(unique(data1[[i]]$run_date), length(data1)),
+                        coverage1 = rep(0, length(data1)),
+                        coverage2 = rep(0, length(data2)))
+  
+  # calculate data for each overage
+  for (i in 1:length(data1)) {
+    plotdata$run_date[i] = unique(data1[[i]]$run_date)
+    plotdata$coverage1[i] = nrow(unique(data1[[i]] %>% filter(sw_agg_id == input_sw_agg_id) %>% select(cyence_id) %>% distinct()))
+    plotdata$coverage2[i] = nrow(unique(data2[[i]] %>% filter(sw_agg_id == input_sw_agg_id) %>% select(cyence_id) %>% distinct()))
+  }
+  
+  # plot
+  plotdata = melt(plotdata, id = "run_date")
+  plotdata$labels = as.vector(plotdata$value)
+  cy_change = (((plotdata %>% filter((run_date == "2018-09-01") & (variable == "coverage2")))$value - 
+    (plotdata %>% filter((run_date == "2018-09-01") & (variable == "coverage1")))$value))/ 
+    (plotdata %>% filter((run_date == "2018-09-01") & (variable == "coverage1")))$value
+  
+  ggplot(plotdata, aes(run_date, y = value, color = variable)) + 
+    geom_line() + geom_point(color = "black") + 
+    (scale_x_date(breaks = date_breaks("1 month"),
+                  labels = date_format("%b %y"))) + 
+    xlab("Run Date") + ylab("Number of associated companies") + 
+    theme(
+      panel.background = element_blank(),
+      panel.grid.major = element_line(colour = "grey", linetype = "dotted"),  
+      plot.title = element_text(size = 14, face = "bold"),
+      axis.title.x = element_text(size = 14, face = "bold"),
+      axis.title.y = element_text(size = 14, face = "bold"),
+      text = element_text(size = 14),
+      legend.position = "top"
+    ) + scale_y_continuous(limits = c(0, ceiling(max(plotdata$value)/ 10000) * 10000), 
+                           breaks = seq(0, ceiling(max(plotdata$value)/ 10000) * 10000, by = 20000)) +
+    geom_label_repel(aes(label = labels, color = factor(variable)), size = 3.5, fill = "gray95", show.legend = FALSE) + 
+    scale_colour_manual(labels = c("Production", "Smoothing"), values = c('dodgerblue2', 'firebrick2')) + 
+    labs(caption = "Run date: 2018-09-01", color = "Type of coverage") + 
+    ggtitle(paste0("Product: ", all_sw[all_sw$sw_agg_id == input_sw_agg_id, ]$label, 
+                   ", coverage change in last month: ", paste0(formatC(100 * cy_change, format = "f", digits = 2), "%")))
+  
+  
+  # save plot to corresponding directory
+  ggsave(sprintf("share_table_coverage_comparison/%s.png", str_replace_all(all_sw[all_sw$sw_agg_id == input_sw_agg_id, ]$label, " ", "_")), width = 8, height = 8)
+}
+
+for (sw_agg_id0 in as.character(all_sw$sw_agg_id)) {
+  plot_coverage_comparison(input_sw_agg_id = sw_agg_id0)
+}
+
+
+## Share table review ends
