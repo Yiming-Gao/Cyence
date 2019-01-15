@@ -85,7 +85,7 @@ for (outlier in outlier_agg_ids) {
   print(paste0("Outlier's information: ", outlier_info))
   
   
-  #================= Part 1 -- Data Pull & Analysis -- cyence_id level =================#
+  #================= Part 1 -- Data Pull & Analysis  =================#
   con <- connect_to_redshift()
   
   # What this query does: 
@@ -94,17 +94,6 @@ for (outlier in outlier_agg_ids) {
                   rundate-months(1), "' and sw_agg_id = ", outlier, "")
   all_records <- dbGetQuery(con, query) %>% as.data.table() 
   dbDisconnect(con)
-  
-  
-  # get cyence IDs for two months
-  cyid_last_month <- unique((all_records %>% filter(run_date == rundate-months(1)))$cyence_id)
-  cyid_this_month <- unique((all_records %>% filter(run_date == rundate))$cyence_id)
-
-  # new cyence IDs
-  new_cyids <- setdiff(cyid_this_month,  cyid_last_month)
-  
-  # disappeared IPs
-  disappeared_cyids <- setdiff(cyid_last_month,  cyid_this_month)
   
   
   #================= Part 2 -- Analysis -- IP level =================#
@@ -157,22 +146,16 @@ for (outlier in outlier_agg_ids) {
   
   
   
-  #================= Part 3 -- Combine agg id change + parent agg id change =================#
+  #================= Part 3 -- Combine changes =================#
   
-  # if (nrow(ip_info %>% filter(agg_id0 != agg_id)) == 0) {IPs_changed_location <- ip_info[0, ]} else {IPs_changed_location <- ip_info %>% filter(agg_id0 != agg_id) %>% mutate(type = "switch location")}
   ip_info_change_new <- rbind(ip_info_change_new, data.frame(new_ips_most_connected)) 
   ip_info_change_disappeared<- rbind(ip_info_change_disappeared, data.frame(disappeared_ips_most_connected)) 
   
   # clean up things 
-  rm(cyid_last_month, cyid_this_month, ip_last_month, ip_this_month, disappeared_cyids, disappeared_ips, disappeared_ips_most_connected, new_cyids, new_ips, new_ips_most_connected)
+  rm(ip_last_month, ip_this_month, disappeared_ips, disappeared_ips_most_connected, new_ips, new_ips_most_connected)
   
 }
 
-
-
-
-# ip_info_change = ip_info_change %>% arrange(desc(n_cyid))
-# ip_info_change_parent = ip_info_change_parent %>% arrange(desc(n_cyid))
 
 
 
